@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maritime Daily Digest | 해운 데일리 다이제스트</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#283142;
+    --text:#e6edf3; --muted:#9aa7b8; --accent:#3b82f6; --accent2:#22d3ee;
+    --chip:#222c3d; --chip-hover:#2d3a52; --red:#f87171; --green:#34d399;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;
+    line-height:1.5;padding:28px 20px 60px}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-size:30px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 4px}
+  .meta{color:var(--muted);font-size:14px;margin:0 0 18px}
+  .meta b{color:var(--accent2)}
+  .bar{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .bar label{font-weight:700;display:flex;align-items:center;gap:6px}
+  input[type=date]{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:7px 10px;font-size:14px}
+  button.latest{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer}
+  button.latest:hover{background:var(--chip-hover)}
+  .status{color:var(--green);font-size:14px;font-weight:600}
+  .howto{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:14px 18px;color:var(--muted);font-size:14px;margin-bottom:16px}
+  .howto b{color:var(--text)}
+  .tabs{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
+  .tab{background:var(--panel2);border:1px solid var(--border);border-radius:24px;
+    padding:9px 16px;font-size:14px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .tab:hover{background:var(--chip-hover)}
+  hr{border:none;border-top:1px solid var(--border);margin:18px 0}
+  .section{background:var(--panel);border:1px solid var(--border);border-radius:16px;
+    padding:20px 22px;margin-bottom:18px}
+  .section h2{font-size:21px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--red);display:inline-block}
+  .section .src{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  a.chip{background:var(--chip);border:1px solid var(--border);border-radius:10px;
+    padding:10px 14px;font-size:14.5px;color:var(--text);text-decoration:none;
+    display:flex;align-items:center;gap:8px;transition:.15s;max-width:560px}
+  a.chip:hover{background:var(--chip-hover);border-color:var(--accent)}
+  a.chip .n{color:var(--accent2);font-weight:700;font-size:12.5px;min-width:16px;text-align:right}
+  a.chip .s{color:var(--muted);font-size:11.5px;border:1px solid var(--border);
+    border-radius:6px;padding:1px 6px;margin-left:2px;white-space:nowrap}
+  .err{color:var(--red)}
+  footer{color:var(--muted);font-size:13px;text-align:center;margin-top:30px}
+  @media(max-width:640px){h1{font-size:24px}a.chip{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🚢 Maritime Daily Digest</h1>
+  <p class="sub">17개 해운 전문매체 기반 카테고리별 Top 뉴스 + 출처 바로가기</p>
+  <p class="meta">데이터 기준 <b id="dateLabel">—</b> · 키워드를 누르면 원문으로 이동</p>
+
+  <div class="bar">
+    <label>📅 날짜 선택</label>
+    <input type="date" id="datePick">
+    <button class="latest" id="latestBtn">최신</button>
+    <span class="status" id="status">불러오는 중…</span>
+  </div>
+
+  <div class="howto">
+    <b>사용법</b> — 날짜를 선택하면 그날의 해운 다이제스트를 볼 수 있습니다(매일 아침 자동 축적). 각 항목은 전일·당일 기준이며, 칩을 누르면 원문 기사로 이동합니다. 상단 탭으로 섹션을 빠르게 이동하세요.
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <hr>
+  <div id="board"></div>
+  <footer>Maritime Daily Digest · gCaptain · SAFETY4SEA · Maritime Executive · Splash247 · Seatrade · MarineLink · Marine Insight · Lloyd's List · TradeWinds · KSG · 한국해운신문 · KMI · 해양수산부</footer>
+</div>
+
+<script>
+const SECTIONS = [
+  ["top","📰 Top News","전체 해운 헤드라인"],
+  ["accident","⚠️ Accidents","충돌·좌초·화재·침몰·오염"],
+  ["psc","🛂 PSC","항만국통제 억류·점검"],
+  ["pctc","🚗 PCTC / Car Carrier","자동차운반선·RoRo·EV"],
+  ["wallenius","🌐 Wallenius Wilhelmsen","발주·선대·재무·지속가능성"],
+  ["energy","🌱 Energy Efficiency","대체연료·CII/EEXI·탈탄소"],
+  ["digital","💻 Digitalization","자율운항·AI·사이버보안·스마트항만"],
+  ["tech","🔧 Ship Manager Technical","기관·PMS·레트로핏·입거·BWMS"],
+  ["hr","👮 Marine HR","선원수급·임금·복지·STCW·MLC"],
+  ["hseq","🦺 HSEQ","ISM·Loss Prevention·MARPOL·리스크"],
+  ["korea","🇰🇷 한국해운 시장","HMM·현대글로비스·조선소·항만·정책"]
+];
+
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));}
+
+function renderTabs(){
+  const t=document.getElementById("tabs");
+  t.innerHTML="";
+  SECTIONS.forEach(([k,label])=>{
+    const d=document.createElement("div");
+    d.className="tab";d.textContent=label;
+    d.onclick=()=>document.getElementById("sec-"+k)?.scrollIntoView({behavior:"smooth",block:"start"});
+    t.appendChild(d);
+  });
+}
+
+function renderBoard(data){
+  const b=document.getElementById("board");b.innerHTML="";
+  SECTIONS.forEach(([k,label,src])=>{
+    const items=(data.sections&&data.sections[k])||[];
+    const sec=document.createElement("div");
+    sec.className="section";sec.id="sec-"+k;
+    let chips=items.map((it,i)=>`<a class="chip" href="${esc(it.u)}" target="_blank" rel="noopener"><span class="n">${i+1}</span><span>${esc(it.t)}</span><span class="s">${esc(it.s)}</span></a>`).join("");
+    if(!items.length) chips=`<span class="err">데이터 없음</span>`;
+    sec.innerHTML=`<h2><span class="dot"></span>${label} <span style="color:var(--muted);font-size:14px">(${items.length}건)</span></h2><p class="src">${src}</p><div class="chips">${chips}</div>`;
+    b.appendChild(sec);
+  });
+}
+
+async function loadDate(date){
+  const st=document.getElementById("status");
+  try{
+    const r=await fetch("maritime-data-"+date+".json?v="+Date.now());
+    if(!r.ok) throw new Error();
+    const data=await r.json();
+    document.getElementById("dateLabel").textContent=data.date+" ("+(data.generated||"")+")";
+    st.textContent="✓ "+date+" 데이터";st.className="status";
+    renderBoard(data);
+  }catch(e){
+    st.textContent="✗ "+date+" 데이터 없음";st.className="status err";
+    document.getElementById("board").innerHTML=`<div class="section"><span class="err">해당 날짜 데이터가 없습니다.</span></div>`;
+  }
+}
+
+async function init(){
+  renderTabs();
+  let idx={latest:null,dates:[]};
+  try{idx=await (await fetch("maritime-dates.json?v="+Date.now())).json();}catch(e){}
+  const pick=document.getElementById("datePick");
+  if(idx.latest){pick.value=idx.latest;pick.max=idx.latest;}
+  document.getElementById("latestBtn").onclick=()=>{if(idx.latest){pick.value=idx.latest;loadDate(idx.latest);}};
+  pick.onchange=()=>loadDate(pick.value);
+  if(idx.latest) loadDate(idx.latest);
+  else document.getElementById("status").textContent="인덱스를 찾을 수 없습니다.";
+}
+init();
+</script>
+</body>
+</html>
